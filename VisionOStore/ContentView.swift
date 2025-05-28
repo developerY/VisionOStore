@@ -17,6 +17,7 @@ struct ContentView: View {
                 .padding(.bottom, 50)
 
             Text("Hello, world!")
+            RideLinksView()
 
             ToggleImmersiveSpaceButton()
         }
