@@ -12,54 +12,52 @@ struct OpenContentView: View {
     @Query private var items: [DataExampleItem]
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        // ← add this
+        NavigationStack {
+            NavigationSplitView {
+                List(items, id: \.id) { item in
+                    // ⚠️ VALUE‐BASED LINK
+                    NavigationLink(value: item) {
+                        Text(item.timestamp, format: .dateTime)
                     }
                 }
-                .onDelete(perform: deleteItems)
-            }
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
-            .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
+                .toolbar {
                     Button(action: addItem) {
                         Label("Add Item", systemImage: "plus")
                     }
                 }
+#if os(macOS)
+                .navigationSplitViewColumnWidth(min: 180, ideal: 200)
+#endif
+                .toolbar {
+#if os(iOS)
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        EditButton()
+                    }
+#endif
+                    ToolbarItem {
+                        Button(action: addItem) {
+                            Label("Add Item", systemImage: "plus")
+                        }
+                    }
+                }
+            } detail: {
+                // placeholder when nothing’s selected
+                Text("Select an item")
             }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = DataExampleItem(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+            // ⚠️ THIS WILL NOW ACTUALLY RUN
+            .navigationDestination(for: DataExampleItem.self) { item in
+                Text("Item at \(item.timestamp, format: .dateTime)")
+                    .navigationTitle("Detail")
             }
         }
     }
-}
-
-#Preview {
-    OpenContentView()
-        .modelContainer(for: DataExampleItem.self, inMemory: true)
+        
+        private func addItem() {
+            withAnimation {
+                let newItem = DataExampleItem(timestamp: Date())
+                modelContext.insert(newItem)
+            }
+        }
+    
 }
