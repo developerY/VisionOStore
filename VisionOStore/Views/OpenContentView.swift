@@ -61,3 +61,8 @@ struct OpenContentView: View {
         }
     
 }
+
+#Preview {
+    OpenContentView()
+    
+}

@@ -20,11 +20,18 @@ struct RideLinksView: View {
                         //SettingsView()
                         NavTestView()
                     }
-                    
+                    NavigationLink("Text Nav") {
+                        //SettingsView()
+                        NavTestView()
+                    }
                 }
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Ride Menu")
         }
     }
+}
+
+#Preview() {
+    RideLinksView()
 }
