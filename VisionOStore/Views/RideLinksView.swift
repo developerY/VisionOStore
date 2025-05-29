@@ -16,6 +16,10 @@ struct RideLinksView: View {
                         //SettingsView()
                         OpenContentView()
                     }
+                    NavigationLink("Text Nav") {
+                        //SettingsView()
+                        NavTestView()
+                    }
                     
                 }
             }
