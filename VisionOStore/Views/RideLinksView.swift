@@ -20,9 +20,9 @@ struct RideLinksView: View {
                         //SettingsView()
                         NavTestView()
                     }
-                    NavigationLink("Text Nav") {
+                    NavigationLink("Store Front View") {
                         //SettingsView()
-                        NavTestView()
+                        StoreFrontView()
                     }
                 }
             }
