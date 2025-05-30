@@ -110,8 +110,6 @@ struct ProductDetailSplitView: View {
 }
 
 // MARK: – Previews
-// MARK: – Previews
-
 #Preview("Store Front Split View") {
     StoreFrontSplitView()
         .frame(width: 600, height: 400)

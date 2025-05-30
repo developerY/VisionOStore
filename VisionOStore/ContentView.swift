@@ -20,6 +20,21 @@ struct ContentView: View {
             RideLinksView()
 
             ToggleImmersiveSpaceButton()
+            
+            
+            /*TimelineView(.animation) { timeline in
+                        // Rotate at 45° per second
+                        let degrees = timeline.date.timeIntervalSinceReferenceDate * 45
+                        Model3D(
+                            named: "StoreItems/sneaker_airforce",
+                            bundle: realityKitContentBundle
+                        )
+                        .padding(.bottom, 50)
+                        .rotation3DEffect(
+                            .degrees(degrees),
+                            axis: (x: 0, y: 1, z: 0)
+                        )
+                    }*/
         }
         .padding()
     }

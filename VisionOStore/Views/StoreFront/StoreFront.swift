@@ -10,7 +10,6 @@ import SwiftData
 // MARK: - SwiftData Model
 @Model
 class Product {
-    var id = UUID()
     var name: String
     var productDescription: String  // <-- renamed from description
     var price: Double
