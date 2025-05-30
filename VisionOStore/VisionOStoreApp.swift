@@ -7,6 +7,10 @@
 
 import SwiftUI
 import SwiftData
+import OSLog
+
+let logger = Logger(subsystem: "com.yourcompany.app", category: "Data")
+
 
 @main
 struct VisionOStoreApp: App {
@@ -26,6 +30,15 @@ struct VisionOStoreApp: App {
                 fatalError("Could not create ModelContainer: \(error)")
             }
         }()
+    
+    init() {
+        // only insert if the store is empty
+        let ctx = sharedModelContainer.mainContext
+        let existing: [ProductSplit] = (try? ctx.fetch(FetchDescriptor<ProductSplit>())) ?? []
+        if existing.isEmpty {
+            sampleProductsSplit.forEach { ctx.insert($0) }
+        }
+    }
     
 
     var body: some Scene {
@@ -47,5 +60,19 @@ struct VisionOStoreApp: App {
                 }
         }
         .immersionStyle(selection: .constant(.full), in: .full)
+    }
+}
+
+extension ModelContext {
+    func dumpAllProducts() {
+        do {
+            let all: [ProductSplit] = try fetch(FetchDescriptor<ProductSplit>())
+            logger.info("⛓️ ⁨Found \(all.count) products⁩")
+            for p in all {
+                logger.info("• \(p.name)") // — $\(String(format: \"%.2f\", p.price))")
+            }
+        } catch {
+            logger.error("Failed to fetch products: \(error.localizedDescription)")
+        }
     }
 }

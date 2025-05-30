@@ -12,6 +12,13 @@ struct RideLinksView: View {
         NavigationStack {
             List {
                 Section("Ride Screens") {
+                    
+                    
+                    NavigationLink("Store") {
+                        StoreFrontSplitView()
+                    }
+                    
+                    
                     NavigationLink("Original Item List") {
                         //SettingsView()
                         OpenContentView()
