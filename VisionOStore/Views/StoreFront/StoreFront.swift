@@ -28,7 +28,7 @@ class Product {
 
 
 // MARK: - Main View
-struct StorefrontView: View {
+struct StoreFrontView: View {
     @Query var products: [Product]
 
     var body: some View {
@@ -51,7 +51,7 @@ struct StorefrontView: View {
 struct ProductListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var products: [Product]
-    @Environment(\.navigationSplitViewColumnVisibility) private var columnVisibility
+    //@Environment(\.navigationSplitViewColumnVisibility) private var columnVisibility
     @State private var selectedCategory: String?
 
     var body: some View {
@@ -82,15 +82,15 @@ struct ProductListView: View {
             }
         }
         .onAppear {
-            columnVisibility = .doubleColumn
+            //columnVisibility = .doubleColumn
         }
-        .onChange(of: columnVisibility) { newValue in
+        /*.onChange(of: columnVisibility) { newValue in
             if newValue == .singleColumn {
                 selectedCategory = nil
             }
-        }
+        }*/
         .navigationDestination(for: String.self) { category in
-            ProductListView(selectedCategory: category)
+            ProductListView()//selectedCategory: category)
         }
         .navigationDestination(for: Product.self) { product in
             ProductDetailView(product: product)
@@ -120,9 +120,9 @@ struct ProductDetailView: View {
 
             Text("$\(product.price, specifier: "%.2f")")
                 .font(.title2)
-                .foregroundStyle(.accent)
+                //.foregroundStyle(.accent)
 
-            Text(product.description)
+            Text(product.productDescription)
                 .padding()
 
             Spacer()
@@ -138,17 +138,16 @@ struct ProductDetailView: View {
     let previewContainer = try! ModelContainer(for: Product.self, configurations: .init(isStoredInMemoryOnly: true))
 
     let sampleProducts = [
-        Product(name: "VisionPro", description: "Next-gen AR glasses.", price: 3499.00, category: "Tech", imageName: "visionPro"),
-        Product(name: "AirPods Pro", description: "Active noise cancellation.", price: 249.00, category: "Tech", imageName: "airpods"),
-        Product(name: "SwiftUI Handbook", description: "Comprehensive guide to SwiftUI.", price: 39.99, category: "Books", imageName: "swiftuiBook"),
-        Product(name: "Yoga Mat", description: "Eco-friendly yoga mat.", price: 59.00, category: "Fitness", imageName: "yogaMat")
+        Product(name: "VisionPro", productDescription: "Next-gen AR glasses.", price: 3499.00, category: "Tech", imageName: "visionPro"),
+        Product(name: "AirPods Pro", productDescription: "Active noise cancellation.", price: 249.00, category: "Tech", imageName: "airpods"),
+        Product(name: "SwiftUI Handbook", productDescription: "Comprehensive guide to SwiftUI.", price: 39.99, category: "Books", imageName: "swiftuiBook"),
+        Product(name: "Yoga Mat", productDescription: "Eco-friendly yoga mat.", price: 59.00, category: "Fitness", imageName: "yogaMat")
     ]
 
-    Task { @MainActor in
-        sampleProducts.forEach(previewContainer.mainContext.insert)
-    }
-
-    return StorefrontView()
+    StoreFrontView()
         .modelContainer(previewContainer)
+        .onAppear {
+            sampleProducts.forEach(previewContainer.mainContext.insert)
+        }
 }
 
