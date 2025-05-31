@@ -14,8 +14,12 @@ struct RideLinksView: View {
                 Section("Ride Screens") {
                     
                     
-                    NavigationLink("Store") {
-                        StoreFrontSplitView()
+                    NavigationLink("Super Simple") {
+                        SuperSimple()
+                    }
+                    
+                    NavigationLink("Working View") {
+                        WorkingView()
                     }
                     
                     
@@ -29,7 +33,7 @@ struct RideLinksView: View {
                     }
                     NavigationLink("Store Front View") {
                         //SettingsView()
-                        StoreFrontView()
+                        StoreFrontSplitView()
                     }
                 }
             }

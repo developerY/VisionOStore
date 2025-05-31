@@ -32,13 +32,30 @@ struct VisionOStoreApp: App {
         }()
     
     init() {
-        // only insert if the store is empty
-        let ctx = sharedModelContainer.mainContext
-        let existing: [ProductSplit] = (try? ctx.fetch(FetchDescriptor<ProductSplit>())) ?? []
-        if existing.isEmpty {
-            sampleProductsSplit.forEach { ctx.insert($0) }
+        do {
+            // Define the schema for the ModelContainer
+            let schema = Schema([
+                ProductSplit.self,
+                // Add other models here if you have them
+            ])
+
+            // Configure the ModelContainer
+            // For in-memory store (testing/previews):
+            // let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+            // For persistent store (default):
+            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+
+            sharedModelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+
+            // Call the function to populate data after the container is successfully created
+            populateSampleDataIfNeeded(modelContext: sharedModelContainer.mainContext)
+
+        } catch {
+            // Handle the error appropriately in a real app
+            fatalError("Could not create ModelContainer: \(error)")
         }
     }
+
     
 
     var body: some Scene {
@@ -74,5 +91,39 @@ extension ModelContext {
         } catch {
             logger.error("Failed to fetch products: \(error.localizedDescription)")
         }
+    }
+}
+
+
+// Function to populate sample data if the store is empty for this model type
+func populateSampleDataIfNeeded(modelContext: ModelContext) {
+    // Perform a fetch to see if any ProductSplit objects already exist
+    // This is a simple way to check; for more complex scenarios, you might use a version flag or similar
+    let fetchDescriptor = FetchDescriptor<ProductSplit>()
+
+    do {
+        let existingProducts = try modelContext.fetch(fetchDescriptor)
+        if existingProducts.isEmpty {
+            // If no products exist, insert the sample data
+            print("No existing ProductSplit data found. Populating sample data...")
+            for product in sampleProductsSplit {
+                // Important: Create a new instance for insertion if sampleProductsSplit
+                // are not already Model objects tied to a context.
+                // If sampleProductsSplit were already @Model objects from another context,
+                // you'd need a different approach (like deep copying or re-fetching).
+                // Since sampleProductsSplit is just a plain array of structs/classes,
+                // we insert them directly.
+                modelContext.insert(product)
+            }
+            // Optionally, save the context immediately if needed,
+            // though SwiftData often auto-saves.
+            // try modelContext.save()
+            print("Sample ProductSplit data populated.")
+        } else {
+            print("\(existingProducts.count) ProductSplit items already exist. No new sample data populated.")
+        }
+    } catch {
+        // Handle fetch or save errors appropriately
+        print("Failed to fetch or populate sample data: \(error)")
     }
 }
