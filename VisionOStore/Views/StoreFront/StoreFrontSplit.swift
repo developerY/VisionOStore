@@ -6,6 +6,7 @@
 //
 import OSLog
 import RealityKit  // if you want to inject 3D previews later
+import RealityKitContent
 import SwiftData
 import SwiftUI
 
@@ -13,12 +14,12 @@ import SwiftUI
 
 // MARK: - Sample Data (Updated to use your shoe models)
 let sampleProductsSplit: [ProductSplit] = [
-    /*.init(name: "Nike Air Zoom Pegasus 36", price: 129.99, modelName: "Shoes/Nike_Air_Zoom_Pegasus_36", thumbnailName: "shoe.fill"),
-    .init(name: "Classic Airforce Sneaker", price: 99.99, modelName: "Shoes/sneaker_airforce", thumbnailName: "shoe.2.fill"),
-    .init(name: "Nike Defy All Day", price: 79.50, modelName: "Shoes/Nike_Defy_All_Day_walking_sneakers_shoes", thumbnailName: "figure.walk"),
-    .init(name: "Adidas Sports Shoe", price: 110.00, modelName: "Shoes/Scanned_Adidas_Sports_Shoe", thumbnailName: "figure.run"),
-    .init(name: "Blue Vans Classic", price: 65.00, modelName: "Shoes/Unused_Blue_Vans_Shoe", thumbnailName: "shoe.fill"),*/
-    .init(name: "Low Poly Shoe", price: 49.99, modelName: "Shoes/Shoes_low_poly", thumbnailName: "shoe.2.fill"),
+    .init(name: "Nike Air Zoom Pegasus 36", price: 129.99, modelName: "StoreItems/Shoes/Nike_Air_Zoom_Pegasus_36", thumbnailName: "shoe.fill"),
+    .init(name: "Classic Airforce Sneaker", price: 99.99, modelName: "StoreItems/Shoes/sneaker_airforce", thumbnailName: "shoe.2.fill"),
+    .init(name: "Nike Defy All Day", price: 79.50, modelName: "StoreItems/Shoes/Nike_Defy_All_Day_walking_sneakers_shoes", thumbnailName: "figure.walk"),
+    .init(name: "Adidas Sports Shoe", price: 110.00, modelName: "StoreItems/Shoes/Scanned_Adidas_Sports_Shoe", thumbnailName: "figure.run"),
+    .init(name: "Blue Vans Classic", price: 65.00, modelName: "StoreItems/Shoes/Unused_Blue_Vans_Shoe", thumbnailName: "shoe.fill"),
+    .init(name: "Low Poly Shoe", price: 49.99, modelName: "StoreItems/Shoes/Shoes_low_poly", thumbnailName: "shoe.2.fill"),
 ]
 
 // MARK: – StoreFrontView
@@ -112,6 +113,9 @@ struct ProductRowView: View {
 // MARK: - Detail View
 struct ProductDetailView: View {
     let selectedProduct: ProductSplit?
+    // State variables for animation, moved from ModelTestView
+    @State private var rotationAngle: Angle = .zero
+    @State private var isAnimating: Bool = true
 
     var body: some View {
         Group {
@@ -121,27 +125,12 @@ struct ProductDetailView: View {
                     Text("3D Interactive Model")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-
-                    Model3D(named: product.modelName) { model in
-                        model
-                            .resizable()
-                            .scaledToFit()
-                            .frame(minHeight: 200, maxHeight: 400)
-                    } placeholder: {
-                        ZStack(alignment: .center) {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.gray.opacity(0.1))
-                                .frame(minHeight: 200, maxHeight: 400)
-                            VStack {
-                                ProgressView()
-                                    .padding(.bottom, 10)
-                                Text("Loading Model...")
-                                Text("(Looking for \(product.modelName))")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
+                    
+                    // Use the new helper view
+                    // Add .id(product.id) to force re-creation (and thus animation reset)
+                    // when the product changes. ProductSplit is Identifiable because it's an @Model.
+                    SpinningProductModelView(modelName: product.modelName)
+                        .id(product.id) // This is key to reset animation on product change
                     
                     Text(product.name)
                         .font(.largeTitle.weight(.bold))
@@ -156,6 +145,11 @@ struct ProductDetailView: View {
                             .foregroundColor(.green)
                     }
                     .padding(.horizontal)
+                    
+                    // Example: If you still want a pause/play button controlled by DetailView
+                    // You would need to pass @State for isAnimating down to SpinningProductModelView
+                    // For now, this button is removed for simplicity of this refactor.
+                    // Button(isAnimating ? "Pause" : "Spin") { isAnimating.toggle() }
 
                     Spacer()
                 }
@@ -178,19 +172,64 @@ struct ProductDetailView: View {
     }
 }
 
+// MARK: - Helper View for Spinning 3D Model
+private struct SpinningProductModelView: View {
+    let modelName: String
+    
+    // Animation state is now local to this view
+    @State private var rotationAngle: Angle = .zero
+    @State private var isAnimating: Bool = true // Could also be passed in if needed
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 0.016, paused: !isAnimating)) { context in
+            Model3D(named: modelName, bundle: RealityKitContent.realityKitContentBundle) { model in
+                model
+                    .resizable()
+                    .scaledToFit()
+                    .frame(minHeight: 200, maxHeight: 400)
+                    .rotation3DEffect(
+                        rotationAngle,
+                        axis: (x: 0, y: 1, z: 0)
+                    )
+                    .onChange(of: context.date) {
+                        rotationAngle.degrees += 0.5
+                        if rotationAngle.degrees >= 360 {
+                            rotationAngle.degrees -= 360
+                        }
+                    }
+            } placeholder: {
+                // Simplified placeholder for the helper view
+                ProgressView()
+                    .frame(minHeight: 200, maxHeight: 400)
+            }
+        }
+        // Optional: Add controls within this view or pass bindings
+        // For simplicity, this example keeps animation control internal.
+        // If external control is needed, @Binding for isAnimating and rotationAngle
+        // would be appropriate.
+    }
+}
+
     
 // MARK: - Preview
 #Preview {
+    // Ensure the preview also has access to the model container
+    // and sample data for ProductSplit if DetailView or its children use @Query or @Environment(\.modelContext)
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container: ModelContainer
     do {
         container = try ModelContainer(for: ProductSplit.self, configurations: config)
+        // Populate with sample data for the preview
         let modelContext = container.mainContext
         if try modelContext.fetch(FetchDescriptor<ProductSplit>()).isEmpty {
             sampleProductsSplit.forEach { modelContext.insert($0) }
         }
+        
+        // Return the ContentView for a more complete preview,
+        // or a specific DetailView instance if testing it in isolation.
         return ContentView()
             .modelContainer(container)
+            
     } catch {
         fatalError("Failed to create model container for preview: \(error)")
     }
