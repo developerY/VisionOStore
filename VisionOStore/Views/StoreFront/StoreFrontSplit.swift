@@ -11,157 +11,187 @@ import SwiftUI
 
 // MARK: – Your Data Model
 
-@Model
-class ProductSplit {
-    var name: String
-    var price: Double
-    var imageName: String
-
-    init(name: String, price: Double, imageName: String) {
-        self.name = name
-        self.price = price
-        self.imageName = imageName
-    }
-
-}
-
-// Sample products
+// MARK: - Sample Data (Updated to use your shoe models)
 let sampleProductsSplit: [ProductSplit] = [
-    .init(name: "Vision Pro Case", price: 49.99, imageName: "case"),
-    .init(name: "Spatial Speaker", price: 129.00, imageName: "speaker"),
-    .init(name: "AirLink Earbuds", price: 199.99, imageName: "earbuds"),
-    .init(name: "HoloKey Keyboard", price: 89.50, imageName: "keyboard"),
+    /*.init(name: "Nike Air Zoom Pegasus 36", price: 129.99, modelName: "Shoes/Nike_Air_Zoom_Pegasus_36", thumbnailName: "shoe.fill"),
+    .init(name: "Classic Airforce Sneaker", price: 99.99, modelName: "Shoes/sneaker_airforce", thumbnailName: "shoe.2.fill"),
+    .init(name: "Nike Defy All Day", price: 79.50, modelName: "Shoes/Nike_Defy_All_Day_walking_sneakers_shoes", thumbnailName: "figure.walk"),
+    .init(name: "Adidas Sports Shoe", price: 110.00, modelName: "Shoes/Scanned_Adidas_Sports_Shoe", thumbnailName: "figure.run"),
+    .init(name: "Blue Vans Classic", price: 65.00, modelName: "Shoes/Unused_Blue_Vans_Shoe", thumbnailName: "shoe.fill"),*/
+    .init(name: "Low Poly Shoe", price: 49.99, modelName: "Shoes/Shoes_low_poly", thumbnailName: "shoe.2.fill"),
 ]
 
 // MARK: – StoreFrontView
 let log = Logger(subsystem: "com.yourcompany.app", category: "StoreFront")
+// MARK: - Main Content View with NavigationSplitView
 struct StoreFrontSplitView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query var productItems: [ProductSplit]
-    @State private var selection: ProductSplit?
-    
+    @Query(sort: \ProductSplit.name) private var products: [ProductSplit]
+    @State private var selectedProductForDetail: ProductSplit?
+
     var body: some View {
-        // NavigationStack {
         NavigationSplitView {
-            // Product shelf
-            // Sidebar: bind selection on the List
-            List(productItems, selection: $selection) { product in
-                //NavigationLink(product.name, value: product) {
-                HStack(spacing: 12) {
-                    /*Image(product.imageName)
-                        .resizable()
-                        .frame(width: 60, height: 60)
-                        .cornerRadius(8)*/
-                    VStack(alignment: .leading) {
-                        Text(product.name)
-                            .font(.headline)
-                        Text("$\(product.price, specifier: "%.2f")")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 8)
-                // }
-            }
-            .onAppear {
-                modelContext.dumpAllProducts()
-            }
-            .navigationTitle("Store Front")
-            .toolbar {
-
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        addRandomProduct()
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-
-                    /*Button {
-                        addRandomProduct()
-                        // handle “Add to cart” or whatever
-                    } label: {
-                        Label("Cart", systemImage: "cart")
-                    }*/
-                }
-
-            }
+            ProductSplitView(
+                products: products,
+                selectedProduct: $selectedProductForDetail
+            )
         } detail: {
-            // Detail pane driven by selection
-            if let product = selection {
-                ProductDetailSplitView(product: product)
-            }
-            // Placeholder when nothing selected
-            else {
-                Text("Select a product")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
+            ProductDetailView(selectedProduct: selectedProductForDetail)
+        }
+    }
+}
+    
+    
+// MARK: – Product Detail
+// struct ProductDetailSplitView: View {
+// MARK: - Sidebar View
+struct ProductSplitView: View {
+    let products: [ProductSplit]
+    @Binding var selectedProduct: ProductSplit?
+    @Environment(\.modelContext) private var modelContext
+
+    var body: some View {
+        List(products, selection: $selectedProduct) { product in
+            NavigationLink(value: product) {
+                ProductRowView(product: product)
             }
         }
-        /* Hook up the detail screen
-        .navigationDestination(for: ProductSplit.self) { product in
-            ProductDetailSplitView(product: product)
-        }*/
+        .navigationTitle("Shoe Store")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Clear All", role: .destructive) { clearAllProducts() }
+            }
+            ToolbarItem {
+                Button { addSampleProduct() } label: { Label("Add Item", systemImage: "plus") }
+            }
+        }
     }
-    // }
 
-    private func addRandomProduct() {
-        guard let sample = sampleProductsSplit.randomElement() else { return }
-        let newItem = ProductSplit(
-            name: sample.name,
-            price: sample.price,
-            imageName: sample.imageName
-        )
-        log.info("Add product")
-        modelContext.insert(newItem)
+    private func addSampleProduct() {
+        withAnimation {
+            let newItem = ProductSplit(name: "New Athletic Shoe", price: 89.99, modelName: "StoreItems/Shoes/CS_Gel_Excite_Athletic", thumbnailName: "figure.run")
+            modelContext.insert(newItem)
+        }
+    }
+
+    private func clearAllProducts() {
+        withAnimation {
+            do {
+                try modelContext.delete(model: ProductSplit.self)
+                selectedProduct = nil
+            } catch {
+                print("Failed to clear data: \(error)")
+            }
+        }
     }
 }
 
-// MARK: – Product Detail
-
-struct ProductDetailSplitView: View {
+// MARK: - Product Row View
+struct ProductRowView: View {
     let product: ProductSplit
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                /*Image(product.imageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: 300, maxHeight: 300)
-                    .cornerRadius(12)
-                    .shadow(radius: 8)*/
-
+        HStack {
+            Image(systemName: product.thumbnailName)
+                .symbolRenderingMode(.multicolor) // Make SF Symbols more colorful
+                .resizable()
+                .scaledToFit()
+                .frame(width: 40, height: 40)
+                .cornerRadius(6)
+                //.foregroundColor(.accentColor) // multicolor rendering overrides this
+            VStack(alignment: .leading) {
                 Text(product.name)
-                    .font(.largeTitle.bold())
-
-                Text("$\(product.price, specifier: "%.2f")")
-                    .font(.title2)
-                    .foregroundStyle(.secondary)
-
-                Button(action: {
-                    // add to cart action
-                }) {
-                    Label("Add to Cart", systemImage: "cart.fill.badge.plus")
-                        .font(.headline)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
+                    .font(.headline)
+                Text(String(format: "$%.2f", product.price))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
-            .padding(40)
         }
-        .navigationTitle(product.name)
     }
 }
 
-// MARK: – Previews
-#Preview("Store Front Split View") {
-    StoreFrontSplitView()
-        .frame(width: 600, height: 400)
+// MARK: - Detail View
+struct ProductDetailView: View {
+    let selectedProduct: ProductSplit?
+
+    var body: some View {
+        Group {
+            if let product = selectedProduct {
+                VStack(alignment: .center, spacing: 20) {
+                    
+                    Text("3D Interactive Model")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Model3D(named: product.modelName) { model in
+                        model
+                            .resizable()
+                            .scaledToFit()
+                            .frame(minHeight: 200, maxHeight: 400)
+                    } placeholder: {
+                        ZStack(alignment: .center) {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.gray.opacity(0.1))
+                                .frame(minHeight: 200, maxHeight: 400)
+                            VStack {
+                                ProgressView()
+                                    .padding(.bottom, 10)
+                                Text("Loading Model...")
+                                Text("(Looking for \(product.modelName))")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    
+                    Text(product.name)
+                        .font(.largeTitle.weight(.bold))
+                        .multilineTextAlignment(.center)
+                    
+                    HStack {
+                        Text("Price:")
+                            .font(.title2)
+                        Spacer()
+                        Text(String(format: "$%.2f", product.price))
+                            .font(.title2.weight(.semibold))
+                            .foregroundColor(.green)
+                    }
+                    .padding(.horizontal)
+
+                    Spacer()
+                }
+                .padding()
+                .navigationTitle(product.name)
+            } else {
+                VStack {
+                    Image(systemName: "shoe.circle")
+                        .font(.system(size: 60))
+                        .foregroundColor(.secondary)
+                        .padding(.bottom)
+                    Text("Select a shoe to view it in 3D")
+                        .font(.title2)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                }
+            }
+        }
+    }
 }
 
-#Preview("Product Detail – Vision Pro Case") {
-    ProductDetailSplitView(product: sampleProductsSplit[0])
-        .frame(width: 400, height: 400)
-        .environment(\.colorScheme, .light)
+    
+// MARK: - Preview
+#Preview {
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container: ModelContainer
+    do {
+        container = try ModelContainer(for: ProductSplit.self, configurations: config)
+        let modelContext = container.mainContext
+        if try modelContext.fetch(FetchDescriptor<ProductSplit>()).isEmpty {
+            sampleProductsSplit.forEach { modelContext.insert($0) }
+        }
+        return ContentView()
+            .modelContainer(container)
+    } catch {
+        fatalError("Failed to create model container for preview: \(error)")
+    }
 }

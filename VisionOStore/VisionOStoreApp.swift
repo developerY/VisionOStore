@@ -16,45 +16,25 @@ let logger = Logger(subsystem: "com.yourcompany.app", category: "Data")
 struct VisionOStoreApp: App {
 
     @State private var appModel = AppModel()
-    
-    
-    var sharedModelContainer: ModelContainer = {
-            let schema = Schema([
-                DataExampleItem.self, // Example Data
-            ])
-            let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+    let modelContainer: ModelContainer
 
-            do {
-                return try ModelContainer(for: schema, configurations: [modelConfiguration])
-            } catch {
-                fatalError("Could not create ModelContainer: \(error)")
-            }
-        }()
     
     init() {
         do {
-            // Define the schema for the ModelContainer
-            let schema = Schema([
-                ProductSplit.self,
-                // Add other models here if you have them
-            ])
-
-            // Configure the ModelContainer
-            // For in-memory store (testing/previews):
-            // let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-            // For persistent store (default):
+            let schema = Schema([ProductSplit.self])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-            sharedModelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
-
-            // Call the function to populate data after the container is successfully created
-            populateSampleDataIfNeeded(modelContext: sharedModelContainer.mainContext)
-
+            
+            // Step 1: Create the container
+            modelContainer = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            
+            // Step 2: Perform subsequent setup using the now-initialized container
+            populateSampleDataIfNeeded(modelContext: modelContainer.mainContext)
+            
         } catch {
-            // Handle the error appropriately in a real app
             fatalError("Could not create ModelContainer: \(error)")
         }
     }
+
 
     
 
@@ -62,13 +42,13 @@ struct VisionOStoreApp: App {
         WindowGroup {
             ContentView()
                 .environment(appModel)
-                .modelContainer(sharedModelContainer)
+                .modelContainer(modelContainer)
         }
 
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()
                 .environment(appModel)
-                .modelContainer(sharedModelContainer)
+                .modelContainer(modelContainer)
                 .onAppear {
                     appModel.immersiveSpaceState = .open
                 }

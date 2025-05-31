@@ -6,34 +6,20 @@
 //
 import SwiftUI
 
-
 struct RideLinksView: View {
     var body: some View {
         NavigationStack {
             List {
                 Section("Ride Screens") {
-                    
-                    
-                    NavigationLink("Super Simple") {
-                        SuperSimple()
-                    }
-                    
-                    NavigationLink("Working View") {
-                        WorkingView()
-                    }
-                    
-                    
-                    NavigationLink("Original Item List") {
-                        //SettingsView()
-                        OpenContentView()
-                    }
-                    NavigationLink("Text Nav") {
-                        //SettingsView()
-                        NavTestView()
-                    }
+// ModelTestView
                     NavigationLink("Store Front View") {
                         //SettingsView()
                         StoreFrontSplitView()
+                    }
+                    
+                    NavigationLink("Test View") {
+                        //SettingsView()
+                        ModelTestView()
                     }
                 }
             }
