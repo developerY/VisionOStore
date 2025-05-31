@@ -6,17 +6,20 @@
 //
 import SwiftData
 
+// MARK: - Data Model (Updated with scale property)
 @Model
 class ProductSplit {
     var name: String
     var price: Double
-    var modelName: String // Path to the .usdz file, e.g., "Shoes/Nike_Air_Zoom_Pegasus_36"
-    var thumbnailName: String // Name of an SF Symbol for the list view
+    var modelName: String
+    var thumbnailName: String
+    var scale: Double // Property to hold model-specific scale
 
-    init(name: String, price: Double, modelName: String, thumbnailName: String) {
+    init(name: String, price: Double, modelName: String, thumbnailName: String, scale: Double = 1.0) {
         self.name = name
         self.price = price
         self.modelName = modelName
         self.thumbnailName = thumbnailName
+        self.scale = scale
     }
 }

@@ -12,15 +12,16 @@ import SwiftUI
 
 // MARK: – Your Data Model
 
-// MARK: - Sample Data (Updated to use your shoe models)
+// MARK: - Sample Data (Updated with scale values)
 let sampleProductsSplit: [ProductSplit] = [
-    .init(name: "Nike Air Zoom Pegasus 36", price: 129.99, modelName: "StoreItems/Shoes/Nike_Air_Zoom_Pegasus_36", thumbnailName: "shoe.fill"),
-    .init(name: "Classic Airforce Sneaker", price: 99.99, modelName: "StoreItems/Shoes/sneaker_airforce", thumbnailName: "shoe.2.fill"),
-    .init(name: "Nike Defy All Day", price: 79.50, modelName: "StoreItems/Shoes/Nike_Defy_All_Day_walking_sneakers_shoes", thumbnailName: "figure.walk"),
-    .init(name: "Adidas Sports Shoe", price: 110.00, modelName: "StoreItems/Shoes/Scanned_Adidas_Sports_Shoe", thumbnailName: "figure.run"),
-    .init(name: "Blue Vans Classic", price: 65.00, modelName: "StoreItems/Shoes/Unused_Blue_Vans_Shoe", thumbnailName: "shoe.fill"),
-    .init(name: "Low Poly Shoe", price: 49.99, modelName: "StoreItems/Shoes/Shoes_low_poly", thumbnailName: "shoe.2.fill"),
+    .init(name: "Low Poly Shoe", price: 49.99, modelName: "StoreItems/Shoes/Shoes_low_poly", thumbnailName: "shoe.2.fill", scale: 0.5),
+    .init(name: "Nike Air Zoom Pegasus 36", price: 129.99, modelName: "StoreItems/Shoes/Nike_Air_Zoom_Pegasus_36", thumbnailName: "shoe.fill", scale: 1.0),
+    .init(name: "Classic Airforce Sneaker", price: 99.99, modelName: "StoreItems/Shoes/sneaker_airforce", thumbnailName: "shoe.2.fill", scale: 1.0),
+    // Give this oversized model a smaller scale factor
+    .init(name: "Nike Defy All Day", price: 79.50, modelName: "StoreItems/Shoes/Nike_Defy_All_Day_walking_sneakers_shoes", thumbnailName: "figure.walk", scale: 0.3),
+    .init(name: "Adidas Sports Shoe", price: 110.00, modelName: "StoreItems/Shoes/Scanned_Adidas_Sports_Shoe", thumbnailName: "figure.run", scale: 1.0),
 ]
+
 
 // MARK: – StoreFrontView
 let log = Logger(subsystem: "com.yourcompany.app", category: "StoreFront")
@@ -129,7 +130,7 @@ struct ProductDetailView: View {
                     // Use the new helper view
                     // Add .id(product.id) to force re-creation (and thus animation reset)
                     // when the product changes. ProductSplit is Identifiable because it's an @Model.
-                    SpinningProductModelView(modelName: product.modelName)
+                    SpinningProductModelView(modelName: product.modelName, scale: product.scale)
                         .id(product.id) // This is key to reset animation on product change
                     
                     Text(product.name)
@@ -175,6 +176,7 @@ struct ProductDetailView: View {
 // MARK: - Helper View for Spinning 3D Model
 private struct SpinningProductModelView: View {
     let modelName: String
+    let scale: Double // Accept the scale factor
     
     // Animation state is now local to this view
     @State private var rotationAngle: Angle = .zero
@@ -186,6 +188,7 @@ private struct SpinningProductModelView: View {
                 model
                     .resizable()
                     .scaledToFit()
+                    .scaleEffect(scale) // Apply the specific scale factor here
                     .frame(minHeight: 200, maxHeight: 400)
                     .rotation3DEffect(
                         rotationAngle,
