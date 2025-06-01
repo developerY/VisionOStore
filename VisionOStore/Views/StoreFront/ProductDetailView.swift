@@ -80,13 +80,15 @@ struct ProductDetailView: View {
                     logger.info("Successfully inserted new item '\(newCartItem.productName)' into context.")
                 }
                 
-                try modelContext.save()
-                logger.info("Model context saved successfully after add/update.")
-                
                 // --- NEW LOGGING ADDED HERE ---
+                logger.info("Attempting to save context. Context hasChanges (before save): \(modelContext.hasChanges)")
+                try modelContext.save()
+                logger.info("Model context saved successfully after add/update. Context hasChanges (after save): \(modelContext.hasChanges)")
+                
                 logger.info("--- Verifying cart contents post-save ---")
                 let allItemsFetchDescriptor = FetchDescriptor<CartItem>(sortBy: [SortDescriptor(\.productName)])
                 let allItems = try modelContext.fetch(allItemsFetchDescriptor)
+                logger.info("Context hasChanges (after verification fetch): \(modelContext.hasChanges)")
                 
                 if allItems.isEmpty {
                     logger.warning("Cart is empty after fetch.")
@@ -97,6 +99,7 @@ struct ProductDetailView: View {
                     }
                 }
                 logger.info("------------------------------------")
+                
                 // --- END OF NEW LOGGING ---
             
                 

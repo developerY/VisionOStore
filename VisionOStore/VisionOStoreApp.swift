@@ -43,13 +43,14 @@ struct VisionOStoreApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(appModel)
-                .modelContainer(modelContainer)
         }
+        .environment(appModel)
+        .modelContainer(modelContainer)
         
         WindowGroup(id: "shopping-cart-window") {
             CartView()
         }
+        .environment(appModel)
         .modelContainer(modelContainer)
         .defaultSize(width: 400, height: 600)
 

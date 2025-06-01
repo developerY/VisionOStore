@@ -21,6 +21,11 @@ struct RideLinksView: View {
                         //SettingsView()
                         ModelTestView()
                     }
+                    
+                    NavigationLink("Test DB") {
+                        //SettingsView()
+                        SwiftDataTestView()
+                    }
                 }
             }
             .listStyle(.insetGrouped)
