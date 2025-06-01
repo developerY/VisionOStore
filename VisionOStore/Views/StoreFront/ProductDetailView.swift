@@ -50,29 +50,31 @@ struct ProductDetailView: View {
     }
 
     private func addToCart(product: ProductSplit) {
-           // Capture product.name in a local constant before using it in the predicate
-           let nameToMatch = product.name
-           
-           let predicate = #Predicate<CartItem> { $0.productName == nameToMatch }
-           var fetchDescriptor = FetchDescriptor(predicate: predicate)
-           fetchDescriptor.fetchLimit = 1
+            // Capture product.name in a local constant before using it in the predicate
+            let nameToMatch = product.name
+            
+            let predicate = #Predicate<CartItem> { $0.productName == nameToMatch }
+            var fetchDescriptor = FetchDescriptor(predicate: predicate)
+            fetchDescriptor.fetchLimit = 1
 
-           do {
-               if let existingCartItem = try modelContext.fetch(fetchDescriptor).first {
-                   existingCartItem.quantity += 1
-               } else {
-                   let newCartItem = CartItem(
-                       productName: product.name, // Use original product.name for creating new item
-                       price: product.price,
-                       quantity: 1,
-                       modelName: product.modelName
-                   )
-                   modelContext.insert(newCartItem)
-               }
-           } catch {
-               print("Failed to add item to cart: \(error)")
-           }
-       }
+            do {
+                if let existingCartItem = try modelContext.fetch(fetchDescriptor).first {
+                    // If item exists, increment quantity
+                    existingCartItem.quantity += 1
+                } else {
+                    // If item doesn't exist, create a new one
+                    let newCartItem = CartItem(
+                        productName: product.name,
+                        price: product.price,
+                        quantity: 1,
+                        modelName: product.modelName
+                    )
+                    modelContext.insert(newCartItem) // Insert into SwiftData
+                }
+            } catch {
+                print("Failed to add item to cart: \(error)")
+            }
+        }
 }
 
 
