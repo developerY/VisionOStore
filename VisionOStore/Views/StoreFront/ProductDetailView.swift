@@ -14,6 +14,9 @@ import RealityKitContent
 struct ProductDetailView: View {
     let selectedProduct: ProductSplit?
     @Environment(\.modelContext) private var modelContext
+    
+    private let logger = Logger(subsystem: "com.yourapp.VisionOStore", category: "DetailView")
+
 
     var body: some View {
         Group {
@@ -76,6 +79,27 @@ struct ProductDetailView: View {
                     modelContext.insert(newCartItem)
                     logger.info("Successfully inserted new item '\(newCartItem.productName)' into context.")
                 }
+                
+                try modelContext.save()
+                logger.info("Model context saved successfully after add/update.")
+                
+                // --- NEW LOGGING ADDED HERE ---
+                logger.info("--- Verifying cart contents post-save ---")
+                let allItemsFetchDescriptor = FetchDescriptor<CartItem>(sortBy: [SortDescriptor(\.productName)])
+                let allItems = try modelContext.fetch(allItemsFetchDescriptor)
+                
+                if allItems.isEmpty {
+                    logger.warning("Cart is empty after fetch.")
+                } else {
+                    logger.info("Total items in cart context: \(allItems.count)")
+                    for item in allItems {
+                        logger.info("--> Item: \(item.productName), Qty: \(item.quantity)")
+                    }
+                }
+                logger.info("------------------------------------")
+                // --- END OF NEW LOGGING ---
+            
+                
             } catch {
                 logger.error("Failed to add item to cart: \(error.localizedDescription)")
             }

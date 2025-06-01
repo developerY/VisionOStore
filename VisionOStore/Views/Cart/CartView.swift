@@ -22,7 +22,7 @@ struct CartView: View {
     }
 
     var body: some View {
-        let _ = logger.info("CartView body rendered. Displaying \(cartItems.count) items.")
+        let _ = logger.info("CartView body rendered. Displaying \(cartItems.count) items. Context hasChanges: \(modelContext.hasChanges)")
 
 
         return NavigationStack {
@@ -59,6 +59,11 @@ struct CartView: View {
                         Text(String(format: "$%.2f", totalPrice)).font(.title2.bold())
                     }
                     .padding()
+                    
+                    TextField("Add notes for your order...", text: $notes)
+                                           .textFieldStyle(.roundedBorder)
+                                           .padding([.horizontal, .bottom])
+                                           .opacity(0.7)
                 }
             }
             .navigationTitle("Shopping Cart")
