@@ -6,17 +6,25 @@
 //
 import SwiftUI
 import SwiftData
+import OSLog
+
 
 // MARK: - Cart View
 struct CartView: View {
     @Query(sort: \CartItem.productName) private var cartItems: [CartItem]
     @Environment(\.modelContext) private var modelContext
+    private let logger = Logger(subsystem: "com.yourapp.VisionOStore", category: "CartView")
+    
+    @SceneStorage("cart_notes") private var notes: String = ""
 
     private var totalPrice: Double {
         cartItems.reduce(0) { $0 + $1.lineTotal }
     }
 
     var body: some View {
+        let _ = logger.info("CartView body rendered. Displaying \(cartItems.count) items.")
+
+
         NavigationStack {
             VStack {
                 if cartItems.isEmpty {

@@ -6,6 +6,9 @@
 //
 import SwiftUI
 import SwiftData
+import OSLog
+import RealityKit
+import RealityKitContent
 
 // MARK: - Detail View
 struct ProductDetailView: View {
@@ -77,65 +80,19 @@ struct ProductDetailView: View {
         }
 }
 
-
-// MARK: - Detail View
-struct ProductDetailViewOrig: View {
-    let selectedProduct: ProductSplit?
-    // State variables for animation, moved from ModelTestView
+// MARK: - Other Helper Views
+private struct SpinningProductModelView: View {
+    let modelName: String
+    let scale: Double
     @State private var rotationAngle: Angle = .zero
-    @State private var isAnimating: Bool = true
-
     var body: some View {
-        Group {
-            if let product = selectedProduct {
-                VStack(alignment: .center, spacing: 20) {
-                    
-                    Text("3D Interactive Model")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    
-                    // Use the new helper view
-                    // Add .id(product.id) to force re-creation (and thus animation reset)
-                    // when the product changes. ProductSplit is Identifiable because it's an @Model.
-                    SpinningProductModelView(modelName: product.modelName, scale: product.scale)
-                        .id(product.id) // This is key to reset animation on product change
-                    
-                    Text(product.name)
-                        .font(.largeTitle.weight(.bold))
-                        .multilineTextAlignment(.center)
-                    
-                    HStack {
-                        Text("Price:")
-                            .font(.title2)
-                        Spacer()
-                        Text(String(format: "$%.2f", product.price))
-                            .font(.title2.weight(.semibold))
-                            .foregroundColor(.green)
-                    }
-                    .padding(.horizontal)
-                    
-                    // Example: If you still want a pause/play button controlled by DetailView
-                    // You would need to pass @State for isAnimating down to SpinningProductModelView
-                    // For now, this button is removed for simplicity of this refactor.
-                    // Button(isAnimating ? "Pause" : "Spin") { isAnimating.toggle() }
-
-                    Spacer()
-                }
-                .padding()
-                .navigationTitle(product.name)
-            } else {
-                VStack {
-                    Image(systemName: "shoe.circle")
-                        .font(.system(size: 60))
-                        .foregroundColor(.secondary)
-                        .padding(.bottom)
-                    Text("Select a shoe to view it in 3D")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                }
-            }
+        TimelineView(.animation) { context in
+            Model3D(named: modelName, bundle: RealityKitContent.realityKitContentBundle) { model in
+                model.resizable().scaledToFit().scaleEffect(scale).frame(minHeight: 200, maxHeight: 400)
+                    .rotation3DEffect(rotationAngle, axis: (x: 0, y: 1, z: 0))
+                    .onChange(of: context.date) { rotationAngle.degrees += 0.5 }
+            } placeholder: { ProgressView().frame(minHeight: 200, maxHeight: 400) }
         }
+        .id(modelName)
     }
 }

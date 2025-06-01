@@ -8,23 +8,6 @@ import SwiftUI
 import RealityKit
 import RealityKitContent
 
-// MARK: - Other Helper Views
-struct SpinningProductModelView: View {
-    let modelName: String
-    let scale: Double
-    @State private var rotationAngle: Angle = .zero
-    var body: some View {
-        TimelineView(.animation) { context in
-            Model3D(named: modelName, bundle: RealityKitContent.realityKitContentBundle) { model in
-                model.resizable().scaledToFit().scaleEffect(scale).frame(minHeight: 200, maxHeight: 400)
-                    .rotation3DEffect(rotationAngle, axis: (x: 0, y: 1, z: 0))
-                    .onChange(of: context.date) { rotationAngle.degrees += 0.5 }
-            } placeholder: { ProgressView().frame(minHeight: 200, maxHeight: 400) }
-        }
-        .id(modelName)
-    }
-}
-
 // MARK: - Helper View for Spinning 3D Model
 private struct SpinningProductModelViewOrig: View {
     let modelName: String

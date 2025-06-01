@@ -31,6 +31,32 @@ struct ProductSidebarView: View {
     }
 }
 
+// MARK: - Product Row View
+private struct ProductRowView: View {
+    let product: ProductSplit
+
+    var body: some View {
+        HStack {
+            Image(systemName: product.thumbnailName)
+                .symbolRenderingMode(.multicolor) // Make SF Symbols more colorful
+                .resizable()
+                .scaledToFit()
+                .frame(width: 40, height: 40)
+                .cornerRadius(6)
+                //.foregroundColor(.accentColor) // multicolor rendering overrides this
+            VStack(alignment: .leading) {
+                Text(product.name)
+                    .font(.headline)
+                Text(String(format: "$%.2f", product.price))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+}
+
+
+
 // MARK: – Product Detail
 // struct ProductDetailSplitView: View {
 // MARK: - Sidebar View
