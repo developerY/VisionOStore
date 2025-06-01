@@ -44,6 +44,12 @@ struct VisionOStoreApp: App {
                 .environment(appModel)
                 .modelContainer(modelContainer)
         }
+        
+        WindowGroup(id: "shopping-cart-window") {
+            CartView()
+        }
+        .modelContainer(modelContainer)
+        .defaultSize(width: 400, height: 600)
 
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()
