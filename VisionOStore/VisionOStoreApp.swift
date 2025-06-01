@@ -20,6 +20,8 @@ struct VisionOStoreApp: App {
 
     
     init() {
+        let _ = logger.info("Starting App...")
+
         do {
             let schema = Schema([ProductSplit.self])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)

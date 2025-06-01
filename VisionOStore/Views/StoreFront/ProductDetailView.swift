@@ -53,7 +53,7 @@ struct ProductDetailView: View {
     }
 
     private func addToCart(product: ProductSplit) {
-            // Capture product.name in a local constant before using it in the predicate
+            logger.info("addToCart called for product: '\(product.name)'")
             let nameToMatch = product.name
             
             let predicate = #Predicate<CartItem> { $0.productName == nameToMatch }
@@ -61,21 +61,23 @@ struct ProductDetailView: View {
             fetchDescriptor.fetchLimit = 1
 
             do {
+                logger.debug("Executing fetch for existing cart item.")
                 if let existingCartItem = try modelContext.fetch(fetchDescriptor).first {
-                    // If item exists, increment quantity
                     existingCartItem.quantity += 1
+                    logger.info("Item exists. Incremented quantity to \(existingCartItem.quantity).")
                 } else {
-                    // If item doesn't exist, create a new one
+                    logger.info("Item does not exist. Creating new CartItem.")
                     let newCartItem = CartItem(
                         productName: product.name,
                         price: product.price,
                         quantity: 1,
                         modelName: product.modelName
                     )
-                    modelContext.insert(newCartItem) // Insert into SwiftData
+                    modelContext.insert(newCartItem)
+                    logger.info("Successfully inserted new item '\(newCartItem.productName)' into context.")
                 }
             } catch {
-                print("Failed to add item to cart: \(error)")
+                logger.error("Failed to add item to cart: \(error.localizedDescription)")
             }
         }
 }

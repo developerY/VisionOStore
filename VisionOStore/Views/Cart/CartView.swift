@@ -25,7 +25,7 @@ struct CartView: View {
         let _ = logger.info("CartView body rendered. Displaying \(cartItems.count) items.")
 
 
-        NavigationStack {
+        return NavigationStack {
             VStack {
                 if cartItems.isEmpty {
                     ContentUnavailableView("Your Cart is Empty", systemImage: "cart")
