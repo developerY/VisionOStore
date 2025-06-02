@@ -109,7 +109,7 @@ struct ProductDetailView: View {
         }
 }
 
-// MARK: - Other Helper Views
+/* MARK: - Other Helper Views
 private struct SpinningProductModelView: View {
     let modelName: String
     let scale: Double
@@ -124,4 +124,4 @@ private struct SpinningProductModelView: View {
         }
         .id(modelName)
     }
-}
+}*/
