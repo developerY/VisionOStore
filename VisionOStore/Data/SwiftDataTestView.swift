@@ -8,59 +8,62 @@ import SwiftUI
 import SwiftData
 import OSLog
 
-// MARK: - SwiftDataTestView (For basic SwiftData operations testing)
+// MARK: - SwiftDataTestView (Now testing ProductSplit)
 struct SwiftDataTestView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query(sort: \CartItem.productName) private var cartItems: [CartItem] // To display count and list
+    // Temporarily query ProductSplit to see if it works
+    @Query(sort: \ProductSplit.name) private var products: [ProductSplit]
     private let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.yourapp", category: "SwiftDataTestView")
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("SwiftData Basic Test")
+            Text("SwiftData Basic Test (ProductSplit)")
                 .font(.largeTitle)
                 .padding(.bottom, 20)
             
-            Text("Cart Items in Store (via @Query): \(cartItems.count)")
+            Text("ProductSplits in Store (via @Query): \(products.count)")
                 .font(.headline)
 
-            Button("Add Test CartItem & Save") {
-                addTestItem()
+            Button("Add Test ProductSplit & Save") {
+                addTestProductSplit()
             }
             .buttonStyle(.borderedProminent)
             .padding()
 
-            Button("Fetch All CartItems (Log Only)") {
-                fetchAllItems(messagePrefix: "Manual Fetch Button Pressed")
+            Button("Fetch All ProductSplits (Log Only)") {
+                fetchAllProductSplits(messagePrefix: "Manual Fetch Button Pressed")
             }
             .buttonStyle(.bordered)
             
             Text("Items from @Query:")
-            if cartItems.isEmpty {
-                Text("No items found by @Query.")
+            if products.isEmpty {
+                Text("No ProductSplits found by @Query.")
             } else {
-                List(cartItems) { item in
-                    Text("\(item.productName) - Qty: \(item.quantity), Price: \(item.price, format: .currency(code: "USD"))")
+                List(products) { product in
+                    Text("\(product.name) - Price: \(product.price, format: .currency(code: "USD"))")
                 }
             }
         }
         .padding()
         .onAppear {
-            logger.info("SwiftDataTestView appeared. Initial cart items via @Query: \(cartItems.count)")
-            if !cartItems.isEmpty {
-                for item in cartItems {
-                    logger.info("--> Initial @Query Item: \(item.productName), Qty: \(item.quantity)")
+            logger.info("SwiftDataTestView appeared. Initial ProductSplits via @Query: \(products.count)")
+            if !products.isEmpty {
+                for product in products {
+                    logger.info("--> Initial @Query Product: \(product.name)")
                 }
             }
+             // Fetch all on appear to check initial state
+            fetchAllProductSplits(messagePrefix: "OnAppear Fetch")
         }
     }
 
-    func addTestItem() {
-        logger.notice("--- Attempting to add TestItem ---")
-        logger.info("Context hasChanges (start of addTestItem): \(modelContext.hasChanges)")
+    func addTestProductSplit() {
+        logger.notice("--- Attempting to add Test ProductSplit ---")
+        logger.info("Context hasChanges (start of addTestProductSplit): \(modelContext.hasChanges)")
 
-        let testProductName = "Test Shoe \(Int.random(in: 1...1000))" // Unique name for testing
-        let newItem = CartItem(productName: testProductName, price: 1.99, quantity: 1, modelName: "test.usdz")
-        logger.info("Created new CartItem: \(newItem.productName)")
+        let testProductName = "Test Product \(Int.random(in: 1...1000))"
+        let newItem = ProductSplit(name: testProductName, price: 9.99, modelName: "test_product.usdz", thumbnailName: "photo", scale: 1.0)
+        logger.info("Created new ProductSplit: \(newItem.name)")
 
         modelContext.insert(newItem)
         logger.info("Called modelContext.insert(). Context hasChanges (after insert): \(modelContext.hasChanges)")
@@ -73,44 +76,40 @@ struct SwiftDataTestView: View {
             logger.error("Error saving context: \(error.localizedDescription)")
         }
         
-        fetchAllItems(messagePrefix: "Verification fetch immediately after addTestItem")
+        fetchAllProductSplits(messagePrefix: "Verification fetch immediately after addTestProductSplit")
     }
     
-    func fetchAllItems(messagePrefix: String = "Fetching all items") {
+    func fetchAllProductSplits(messagePrefix: String = "Fetching all ProductSplits") {
         logger.info("--- \(messagePrefix) ---")
-        let fetchDescriptor = FetchDescriptor<CartItem>(sortBy: [SortDescriptor(\.productName)])
+        let fetchDescriptor = FetchDescriptor<ProductSplit>(sortBy: [SortDescriptor(\.name)])
         do {
             let items = try modelContext.fetch(fetchDescriptor)
-            logger.info("Fetched \(items.count) items via manual fetch.")
+            logger.info("Fetched \(items.count) ProductSplits via manual fetch.")
             if items.isEmpty {
-                logger.warning("No items found in manual fetch.")
+                logger.warning("No ProductSplits found in manual fetch.")
             } else {
                 for item in items {
-                    logger.info("--> Manually Fetched Item: \(item.productName), Qty: \(item.quantity)")
+                    logger.info("--> Manually Fetched ProductSplit: \(item.name)")
                 }
             }
         } catch {
-            logger.error("Error fetching items: \(error.localizedDescription)")
+            logger.error("Error fetching ProductSplits: \(error.localizedDescription)")
         }
         logger.info("Context hasChanges (after manual fetch): \(modelContext.hasChanges)")
         logger.info("------------------------------------")
     }
 }
 
-// Preview for the test view (optional, but good for isolation)
-#Preview("SwiftDataTestView_Preview") {
-    // For previewing this view in isolation, you'd need to set up a sample ModelContainer
-    // This is more involved if the view is in a separate file from YourApp.swift
-    // For now, rely on running it as the root view in YourApp.
-    
-    // Example of how you might set up a preview if needed:
+// Preview for the test view
+#Preview("SwiftDataTestView_ProductSplit_Preview") {
     do {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: CartItem.self, ProductSplit.self, configurations: config) // Add all models used
+        // Ensure schema includes ProductSplit for this test
+        let container = try ModelContainer(for: ProductSplit.self, CartItem.self, configurations: config)
         
-        // Optionally populate with test data for the preview
-        // let sampleItem = CartItem(productName: "Preview Item", price: 9.99, quantity: 1, modelName: "preview.usdz")
-        // container.mainContext.insert(sampleItem)
+        // Optionally populate with test data for the preview if needed
+        // let sampleProduct = ProductSplit(name: "Preview Product", price: 19.99, modelName: "preview.usdz", thumbnailName: "photo", scale: 1.0)
+        // container.mainContext.insert(sampleProduct)
         
         return SwiftDataTestView()
             .modelContainer(container)
