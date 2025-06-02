@@ -26,6 +26,11 @@ struct RideLinksView: View {
                         //SettingsView()
                         SwiftDataTestView()
                     }
+                    
+                    NavigationLink("Test Chart DB") {
+                        //SettingsView()
+                        SwiftDataChartTestView()
+                    }
                 }
             }
             .listStyle(.insetGrouped)

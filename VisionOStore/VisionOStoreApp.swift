@@ -23,7 +23,10 @@ struct VisionOStoreApp: App {
         let _ = logger.info("Starting App...")
 
         do {
-            let schema = Schema([ProductSplit.self])
+            let schema = Schema([
+                    ProductSplit.self,
+                    CartItem.self // <-- ADD THIS LINE
+            ])
             let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
             
             // Step 1: Create the container
