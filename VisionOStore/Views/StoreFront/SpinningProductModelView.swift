@@ -10,42 +10,43 @@ import RealityKitContent
 
 // MARK: - Other Helper Views
 // Updated SpinningProductModelView with DragGesture for manual rotation
+// MARK: - Other Helper Views
+// Updated SpinningProductModelView with MagnificationGesture for zoom
 struct SpinningProductModelView: View {
     let modelName: String
-    let scale: Double
+    let scale: Double // Renamed from 'scale' to 'baseScale' for clarity
 
-    // Rotation state for both X and Y axes
+    // Rotation state
     @State private var yRotationAngle: Angle = .zero
     @State private var xRotationAngle: Angle = .zero
-    
-    // To accumulate rotation from drag gestures
     @State private var accumulatedYRotation: Angle = .zero
     @State private var accumulatedXRotation: Angle = .zero
-    
-    // Controls the automatic spinning
     @State private var isAutoSpinning: Bool = true
-    // Tracks if a drag gesture is active
-    @State private var isDragging: Bool = false
-
-    // Sensitivity for drag rotation
+    @State private var isDraggingRotation: Bool = false
     private let dragSensitivity: Double = 0.5
 
+    // Zoom/Magnification state
+    @State private var currentMagnification: CGFloat = 1.0
+    @State private var accumulatedMagnification: CGFloat = 1.0
+    // Define min and max zoom levels
+    private let minMagnification: CGFloat = 0.5
+    private let maxMagnification: CGFloat = 3.0
+
     var body: some View {
-        TimelineView(.animation(minimumInterval: 0.016, paused: !isAutoSpinning || isDragging )) { context in
+        TimelineView(.animation(minimumInterval: 0.016, paused: !isAutoSpinning || isDraggingRotation )) { context in
             Model3D(named: modelName, bundle: RealityKitContent.realityKitContentBundle) { model in
                 model
                     .resizable()
                     .scaledToFit()
-                    .scaleEffect(scale)
+                    // Apply base scale from product and then interactive magnification
+                    .scaleEffect(scale * currentMagnification)
                     .frame(minHeight: 200, maxHeight: 400)
-                    // Apply X rotation first, then Y for more standard orbital control
                     .rotation3DEffect(xRotationAngle, axis: (x: 1, y: 0, z: 0))
                     .rotation3DEffect(yRotationAngle, axis: (x: 0, y: 1, z: 0))
-                    .onChange(of: context.date) { // Drives auto-spin
-                        if isAutoSpinning && !isDragging {
-                            yRotationAngle.degrees += 0.5 // Auto-spin around Y
+                    .onChange(of: context.date) {
+                        if isAutoSpinning && !isDraggingRotation {
+                            yRotationAngle.degrees += 0.5
                             if yRotationAngle.degrees >= 360 { yRotationAngle.degrees -= 360 }
-                            // Keep accumulated in sync if auto-spinning
                             accumulatedYRotation = yRotationAngle
                         }
                     }
@@ -53,35 +54,58 @@ struct SpinningProductModelView: View {
                 ProgressView().frame(minHeight: 200, maxHeight: 400)
             }
         }
+        // Combine DragGesture for rotation and MagnificationGesture for zoom
+        // Applying them sequentially usually works fine. If conflicts arise, SimultaneousGesture could be used.
         .gesture(
             DragGesture()
                 .onChanged { value in
-                    if !isDragging { // First time onChanged is called for this drag
-                        isDragging = true
-                        isAutoSpinning = false // Stop auto-spin
+                    if !isDraggingRotation {
+                        isDraggingRotation = true
+                        isAutoSpinning = false
                     }
-                    // Calculate new rotation based on drag from the last accumulated rotation
                     yRotationAngle = accumulatedYRotation + Angle(degrees: Double(value.translation.width) * dragSensitivity)
-                    xRotationAngle = accumulatedXRotation + Angle(degrees: -Double(value.translation.height) * dragSensitivity) // Negative for intuitive up/down swipe
+                    xRotationAngle = accumulatedXRotation + Angle(degrees: -Double(value.translation.height) * dragSensitivity)
                 }
                 .onEnded { value in
-                    isDragging = false
-                    // Store the final rotation from this drag as the new accumulated base
+                    isDraggingRotation = false
                     accumulatedYRotation = yRotationAngle
                     accumulatedXRotation = xRotationAngle
-                    // Optional: Add a button or logic to re-enable auto-spin if desired
                 }
         )
-        .id(modelName) // Resets state when modelName changes
-        // Optional: Add a button to toggle isAutoSpinning
-        // .overlay(alignment: .bottom) {
-        //     Button(isAutoSpinning ? "Pause Spin" : "Resume Spin") {
-        //         isAutoSpinning.toggle()
-        //         if isAutoSpinning { // If resuming, start from current accumulated yRotation
-        //            yRotationAngle = accumulatedYRotation
-        //         }
-        //     }
-        //     .padding()
-        //}
+        .gesture(
+            MagnificationGesture()
+                .onChanged { value in
+                    // Stop auto-spin when zooming
+                    isAutoSpinning = false
+                    // Calculate new magnification, ensuring it stays within min/max bounds
+                    let newMagnification = accumulatedMagnification * value
+                    currentMagnification = min(max(newMagnification, minMagnification), maxMagnification)
+                }
+                .onEnded { value in
+                    // Store the final magnification from this gesture
+                    accumulatedMagnification = currentMagnification
+                }
+        )
+        .id(modelName) // Resets state (including zoom and rotation) when modelName changes
+        // Optional: Button to reset zoom and rotation
+        .overlay(alignment: .topTrailing) {
+            Button {
+                withAnimation {
+                    xRotationAngle = .zero
+                    yRotationAngle = .zero
+                    accumulatedXRotation = .zero
+                    accumulatedYRotation = .zero
+                    currentMagnification = 1.0
+                    accumulatedMagnification = 1.0
+                    isAutoSpinning = true // Optionally restart auto-spin
+                }
+            } label: {
+                Image(systemName: "arrow.counterclockwise.circle.fill")
+                    .font(.title2)
+                    .padding()
+            }
+            .buttonStyle(.plain) // Use plain style for better appearance as an overlay
+            .opacity(isDraggingRotation || (currentMagnification != 1.0) || (xRotationAngle != .zero) || (yRotationAngle != .zero && !isAutoSpinning) ? 0.8 : 0.3) // Show more clearly when interacted
+        }
     }
 }
