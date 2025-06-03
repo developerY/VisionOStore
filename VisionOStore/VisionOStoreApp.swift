@@ -8,19 +8,17 @@
 import SwiftUI
 import SwiftData
 import OSLog
-
-let logger = Logger(subsystem: "com.yourcompany.app", category: "Data")
-
-
 @main
 struct VisionOStoreApp: App {
 
+    // Initialize the AppModel as a StateObject or just a let if its properties are @Published
+    // With @Observable, a simple @State is fine.
     @State private var appModel = AppModel()
     let modelContainer: ModelContainer
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.yourapp", category: "YourApp")
 
-    
     init() {
-        let _ = logger.info("Starting App...")
+        Self.logger.info("Starting App...")
 
         do {
             let schema = Schema([
@@ -36,7 +34,8 @@ struct VisionOStoreApp: App {
             populateSampleDataIfNeeded(modelContext: modelContainer.mainContext)
             
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            Self.logger.error("Could not create ModelContainer: \(error.localizedDescription)")
+             fatalError("Could not create ModelContainer: \(error)")
         }
     }
 
@@ -46,43 +45,31 @@ struct VisionOStoreApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(appModel)
+
         }
-        .environment(appModel)
         .modelContainer(modelContainer)
         
         WindowGroup(id: "shopping-cart-window") {
             CartView()
+                .environment(appModel) // Also inject if CartView needs it
         }
-        .environment(appModel)
         .modelContainer(modelContainer)
         .defaultSize(width: 400, height: 600)
 
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()
-                .environment(appModel)
-                .modelContainer(modelContainer)
+                .environment(appModel) // Inject AppModel
+                .modelContainer(modelContainer) // If ImmersiveView needs SwiftData
                 .onAppear {
                     appModel.immersiveSpaceState = .open
                 }
                 .onDisappear {
                     appModel.immersiveSpaceState = .closed
+                    appModel.selectedProductForImmersiveView = nil // Clear selection when space closes
                 }
         }
-        .immersionStyle(selection: .constant(.full), in: .full)
-    }
-}
-
-extension ModelContext {
-    func dumpAllProducts() {
-        do {
-            let all: [ProductSplit] = try fetch(FetchDescriptor<ProductSplit>())
-            logger.info("⛓️ ⁨Found \(all.count) products⁩")
-            for p in all {
-                logger.info("• \(p.name)") // — $\(String(format: \"%.2f\", p.price))")
-            }
-        } catch {
-            logger.error("Failed to fetch products: \(error.localizedDescription)")
-        }
+        .immersionStyle(selection: .constant(.full), in: .full) // As per your previous code
     }
 }
 

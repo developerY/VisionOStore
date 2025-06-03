@@ -12,6 +12,11 @@ import SwiftUI
 @Observable
 class AppModel {
     let immersiveSpaceID = "ImmersiveSpace"
+    // Product selected for the immersive experience
+    var selectedProductForImmersiveView: ProductSplit? = nil
+    var productForARTryOn: ProductSplit? = nil // Renamed for clarity
+    
+    
     enum ImmersiveSpaceState {
         case closed
         case inTransition

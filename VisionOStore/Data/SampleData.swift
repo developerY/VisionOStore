@@ -4,6 +4,9 @@
 //
 //  Created by Siamak Ashrafi on 6/1/25.
 //
+import SwiftData
+import OSLog
+
 // MARK: – Your Data Model
 
 // MARK: - Sample Data (Updated with scale values)
@@ -15,4 +18,21 @@ let sampleProductsSplit: [ProductSplit] = [
     .init(name: "Nike Defy All Day", price: 79.50, modelName: "StoreItems/Shoes/Nike_Defy_All_Day_walking_sneakers_shoes", thumbnailName: "figure.walk", scale: 0.5),
     .init(name: "Adidas Sports Shoe", price: 110.00, modelName: "StoreItems/Shoes/Scanned_Adidas_Sports_Shoe", thumbnailName: "figure.run", scale: 0.5),
 ]
+
+
+let logger = Logger(subsystem: "com.yourcompany.app", category: "Data")
+
+extension ModelContext {
+    func dumpAllProducts() {
+        do {
+            let all: [ProductSplit] = try fetch(FetchDescriptor<ProductSplit>())
+            logger.info("⛓️ ⁨Found \(all.count) products⁩")
+            for p in all {
+                logger.info("• \(p.name)") // — $\(String(format: \"%.2f\", p.price))")
+            }
+        } catch {
+            logger.error("Failed to fetch products: \(error.localizedDescription)")
+        }
+    }
+}
 
