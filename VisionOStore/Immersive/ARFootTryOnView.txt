@@ -1,0 +1,145 @@
+//
+//  ARFootTryOnView.swift
+//  VisionOStore
+//
+//  Created by Siamak Ashrafi on 6/2/25.
+//
+import SwiftUI
+import ARKit // Import ARKit for body tracking
+import RealityKit
+import RealityKitContent
+import OSLog
+
+import SwiftUI
+import RealityKit
+import ARKit
+import os.log
+
+// MARK: - ARFootTryOnView (New View for AR Foot Interaction)
+
+// MARK: - ARFootTryOnView (Corrected ARKitSession Usage)
+struct ARFootTryOnView: View {
+    @Environment(AppModel.self) private var appModel
+
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.yourapp",
+        category: "ARFootTryOnView"
+    )
+    //let session = ARSession()
+    // Use ARKit's built-in session
+    //private let arSession = ARSession()
+
+    @State private var leftFootTransform: Transform?
+    @State private var rightFootTransform: Transform?
+
+    private let leftShoeEntityName  = "leftVirtualShoe"
+    private let rightShoeEntityName = "rightVirtualShoe"
+
+    var body: some View {
+        RealityView { content in
+            Self.logger.info("Setting up AR scene.")
+
+            guard let product = appModel.productForFootTryOn else {
+                Self.logger.warning("No product selected for try-on.")
+                return
+            }
+
+            Task {
+                do {
+                    let modelName = product.modelName
+                    let bundle = RealityKitContent.realityKitContentBundle
+                    Self.logger.info("Loading model \(modelName) for \(product.name).")
+
+                    let prototype = try await Entity(named: modelName, in: bundle)
+                    prototype.scale = SIMD3<Float>(repeating: Float(product.scale) * 0.07)
+
+                    let leftShoe = prototype.clone(recursive: true)
+                    leftShoe.name = leftShoeEntityName
+                    leftShoe.isEnabled = false
+                    content.add(leftShoe)
+
+                    let rightShoe = prototype.clone(recursive: true)
+                    rightShoe.name = rightShoeEntityName
+                    rightShoe.isEnabled = false
+                    content.add(rightShoe)
+
+                    Self.logger.info("Added placeholder shoe entities (disabled).")
+                } catch {
+                    Self.logger.error("Failed to load shoe model: \(error.localizedDescription)")
+                }
+            }
+
+        } update: { content in
+            guard
+                let leftEntity = content.entities.first(where: { $0.name == leftShoeEntityName }),
+                let rightEntity = content.entities.first(where: { $0.name == rightShoeEntityName })
+            else {
+                return
+            }
+
+            if let t = leftFootTransform {
+                leftEntity.transform = t
+                leftEntity.isEnabled = true
+                Self.logger.trace("Applied left foot transform.")
+            } else {
+                leftEntity.isEnabled = false
+            }
+
+            if let t = rightFootTransform {
+                rightEntity.transform = t
+                rightEntity.isEnabled = true
+                Self.logger.trace("Applied right foot transform.")
+            } else {
+                rightEntity.isEnabled = false
+            }
+        }
+        .task {
+            Self.logger.info("Attempting to run ARKit session.")
+
+            // Check that the device supports body tracking
+            guard ARBodyTrackingConfiguration.isSupported else {
+                Self.logger.warning("Body‐tracking is not supported on this device/simulator.")
+                return
+            }
+
+            let config = ARBodyTrackingConfiguration()
+            config.planeDetection = []          // we only care about body tracking
+            config.environmentTexturing = .none  // disable extra features
+
+            arSession.run(config)
+            Self.logger.info("ARKit session is running with ARBodyTrackingConfiguration.")
+
+            // Process body anchor updates
+            for await update in arSession.anchorUpdates(for: ARBodyAnchor.self) {
+                guard
+                    let bodyAnchor = update.anchor,
+                    update.event != .removed
+                else {
+                    Self.logger.info("Body anchor removed; hiding shoes.")
+                    leftFootTransform = nil
+                    rightFootTransform = nil
+                    continue
+                }
+
+                let skeleton = bodyAnchor.skeleton
+                let origin   = bodyAnchor.originFromAnchorTransform
+
+                if let leftJoint = skeleton.jointTransform(for: .leftFoot) {
+                    leftFootTransform = Transform(matrix: origin * leftJoint)
+                    Self.logger.trace("Updated left foot transform.")
+                } else {
+                    leftFootTransform = nil
+                }
+
+                if let rightJoint = skeleton.jointTransform(for: .rightFoot) {
+                    rightFootTransform = Transform(matrix: origin * rightJoint)
+                    Self.logger.trace("Updated right foot transform.")
+                } else {
+                    rightFootTransform = nil
+                }
+            }
+
+            Self.logger.info("Body anchor update loop ended.")
+        }
+    }
+}

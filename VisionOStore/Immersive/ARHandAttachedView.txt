@@ -1,0 +1,123 @@
+//
+//  ARHandAttachedView.swift
+//  VisionOStore
+//
+//  Created by Siamak Ashrafi on 6/2/25.
+//
+import SwiftUI
+import ARKit // Import ARKit for body tracking
+import RealityKit
+import RealityKitContent
+import OSLog
+// MARK: - ARHandAttachedView (Replaces ARFootTryOnView)
+// MARK: - ARHandAttachedView (Corrected HandAnchor property name)
+// MARK: - ARHandAttachedView (Corrected HandAnchor property name)
+// MARK: - ARHandAttachedView (Corrected Joint Transform Access)
+// MARK: - ARHandAttachedView (Updated with Scene Publisher for Hand Tracking)
+struct ARHandAttachedView: View {
+    @Environment(AppModel.self) var appModel
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.yourapp", category: "ARHandAttachedView")
+    
+    // State to hold the transform for the target hand joint
+    @State private var targetHandJointTransform: Transform? = nil
+    
+    private let shoeEntityName = "arTryOnShoe"
+
+    var body: some View {
+        RealityView { content in
+            Self.logger.info("ARHandAttachedView make: Setting up scene.")
+            guard let product = appModel.productForARTryOn else {
+                 Self.logger.warning("ARHandAttachedView make: No product selected for try-on.")
+                 return
+            }
+
+            // Load model asynchronously and add it to the scene
+            Task {
+                do {
+                    Self.logger.info("ARHandAttachedView make: Loading model \(product.modelName) for \(product.name)")
+                    let shoePrototype = try await Entity(named: product.modelName, in: RealityKitContent.realityKitContentBundle)
+                    shoePrototype.scale = SIMD3<Float>(repeating: Float(product.scale) * 0.05) // Adjust base scale!
+                    // Example initial orientation fix if needed:
+                    // shoePrototype.orientation = simd_quatf(angle: .pi, axis: [0,1,0]) * simd_quatf(angle: -.pi/2, axis: [1,0,0])
+                    shoePrototype.name = shoeEntityName
+                    shoePrototype.isEnabled = false // Start disabled, enable when hand is tracked
+                    content.add(shoePrototype)
+                    Self.logger.info("Placeholder shoe entity created and added to scene, initially disabled.")
+                } catch {
+                    Self.logger.error("Failed to load shoe model for try-on in make: \(error)")
+                }
+            }
+
+        } update: { content in
+            // Find our shoe entity
+            guard let shoeEntity = content.entities.first(where: { $0.name == shoeEntityName }) else {
+                Self.logger.trace("ARHandAttachedView update: Shoe entity not found yet.")
+                return
+            }
+
+            // Apply the latest hand joint transform
+            if let transform = self.targetHandJointTransform {
+                shoeEntity.transform = transform
+                // May need additional offset/rotation here relative to the joint
+                // E.g. shoeEntity.position += SIMD3<Float>(0, 0.05, 0) // lift it slightly
+                shoeEntity.isEnabled = true
+                Self.logger.trace("ARHandAttachedView update: Applied hand joint transform.")
+            } else {
+                shoeEntity.isEnabled = false // Hide if no valid transform
+            }
+        }
+        .task { // Task to listen for ARHandAnchor updates from the scene
+            Self.logger.info("ARHandAttachedView: Starting task to listen for ARHandAnchor updates from the scene.")
+            
+            // Get the scene from RealityView.Content (this requires a bit of a workaround
+            // as 'content' is not directly accessible here. We usually act on entities within 'content'.
+            // The scene publisher approach is typically used when you have a direct Scene reference.
+            // For RealityView, we might need to set up the ARKitSession and process anchors
+            // as we were trying before, but with the *correct* HandAnchor and HandSkeleton APIs.
+
+            // Let's revert to using ARKitSession with the now known correct HandAnchor.handSkeleton access.
+            // The publisher(for:) API is powerful but might be for a different setup context.
+            
+            let session = ARKitSession() // Local session for this immersive space
+            let handTracking = HandTrackingProvider()
+
+            do {
+                if HandTrackingProvider.isSupported {
+                    Self.logger.info("HandTrackingProvider is supported. Running session.")
+                    try await session.run([handTracking])
+                    
+                    for await anchorUpdate in handTracking.anchorUpdates {
+                        Self.logger.info("Received hand anchor update, event: \(String(describing: anchorUpdate.event))")
+                        
+                        guard let handAnchor = anchorUpdate.anchor, // HandTrackingProvider.anchorUpdates vends HandAnchor directly
+                              anchorUpdate.event != .removed else {
+                            Self.logger.info("Hand anchor removed or nil. Clearing transform.")
+                            self.targetHandJointTransform = nil
+                            continue
+                        }
+
+                        // --- THIS IS THE CORRECTED ACCESS CHAIN YOU PROVIDED ---
+                        if let handSkeleton = handAnchor.handSkeleton,
+                           let wristJoint = handSkeleton.joint(.wrist), // Assuming .wrist can be inferred or use HandSkeleton.JointName.wrist
+                           let jointMatrix = wristJoint.anchorFromJointTransform
+                        {
+                            let worldMatrix = handAnchor.originFromAnchorTransform * jointMatrix
+                            self.targetHandJointTransform = Transform(matrix: worldMatrix)
+                            Self.logger.trace("Updated targetHandJointTransform for \(handAnchor.chirality == .left ? "left" : "right") wrist.")
+                        } else {
+                            if self.targetHandJointTransform != nil {
+                                Self.logger.trace("Wrist joint data not fully available. Clearing transform.")
+                            }
+                            self.targetHandJointTransform = nil
+                        }
+                        // --- END OF CORRECTED ACCESS CHAIN ---
+                    }
+                } else {
+                    Self.logger.warning("HandTrackingProvider is not supported on this device/simulator.")
+                }
+            } catch {
+                Self.logger.error("Failed to run ARKit session or process hand anchors: \(error)")
+            }
+        }
+    }
+}
