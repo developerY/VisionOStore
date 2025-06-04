@@ -56,7 +56,23 @@ struct VisionOStoreApp: App {
         }
         .modelContainer(modelContainer)
         .defaultSize(width: 400, height: 600)
+        
+        
+        // Immersive Space for showing the selected product interactively
+        ImmersiveSpace(id: appModel.generalImmersiveSpaceID) {
+            GeneralImmersiveView()
+                .environment(appModel)
+                // .modelContainer(modelContainer) // Only if GeneralImmersiveView uses @Query or SwiftData directly
+                .onAppear { appModel.immersiveSpaceState = .open }
+                .onDisappear {
+                    appModel.immersiveSpaceState = .closed
+                    appModel.selectedProductForImmersiveView = nil
+                }
+        }
+        .immersionStyle(selection: .constant(.mixed), in: .mixed) //(.full), in: .full)
 
+        
+        // Immersive Space for showing the selected product interactively
         ImmersiveSpace(id: appModel.immersiveSpaceID) {
             ImmersiveView()
                 .environment(appModel) // Inject AppModel
@@ -69,7 +85,7 @@ struct VisionOStoreApp: App {
                     appModel.selectedProductForImmersiveView = nil // Clear selection when space closes
                 }
         }
-        .immersionStyle(selection: .constant(.full), in: .full) // As per your previous code
+        .immersionStyle(selection: .constant(.mixed), in: .mixed)  //(.full), in: .full) // As per your previous code
     }
 }
 

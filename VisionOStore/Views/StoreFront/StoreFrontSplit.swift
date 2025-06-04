@@ -16,6 +16,10 @@ let log = Logger(subsystem: "com.yourcompany.app", category: "StoreFront")
 struct StoreFrontSplitView: View {
     @Query(sort: \ProductSplit.name) private var products: [ProductSplit]
     @State private var selectedProductForDetail: ProductSplit?
+    @Environment(\.openImmersiveSpace) private var openImmersiveSpace // Action to open immersive spaces
+    @Environment(AppModel.self) var appModel // Access AppModel
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.yourapp", category: "ContentView")
+
 
     var body: some View {
         NavigationSplitView {
@@ -25,6 +29,39 @@ struct StoreFrontSplitView: View {
             )
         } detail: {
             ProductDetailView(selectedProduct: selectedProductForDetail)
+        }
+        .toolbar {
+            ToolbarItemGroup(placement: .bottomBar) { // Example placement for immersive space buttons
+                Button {
+                    Task {
+                        Self.logger.info("Attempting to open default immersive scene.")
+                        await openImmersiveSpace(id: appModel.immersiveSpaceID)
+                    }
+                } label: {
+                    Label("Default Scene", systemImage: "arkit.badge.xmark") // Icon for default scene
+                }
+                // Disable button if an immersive space is already open to prevent conflicts
+                .disabled(appModel.immersiveSpaceState == .open && appModel.selectedProductForImmersiveView == nil)
+
+                Spacer() // Use Spacer to push buttons apart or to one side
+
+                // This button is more logically placed in DetailView as it's product-specific
+                // But can be here for general access if desired.
+                // Button {
+                //     if let product = selectedProductForDetail ?? products.first { // Fallback to first product if none selected
+                //         appModel.selectedProductForImmersiveView = product
+                //         Task {
+                //             Self.logger.info("Attempting to open general immersive space for \(product.name).")
+                //             await openImmersiveSpace(id: appModel.generalImmersiveSpaceID)
+                //         }
+                //     } else {
+                //         Self.logger.warning("No product selected or available to view immersively.")
+                //     }
+                // } label: {
+                //     Label("View Product Immersively", systemImage: "rotate.3d")
+                // }
+                // .disabled(appModel.immersiveSpaceState == .open && appModel.selectedProductForImmersiveView != nil)
+            }
         }
     }
 }

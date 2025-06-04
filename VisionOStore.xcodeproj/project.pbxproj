@@ -24,7 +24,6 @@
 		5E9880012DE7962500B5FE8A /* VisionOStore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VisionOStore.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E9880052DE7962500B5FE8A /* RealityKitContent */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = RealityKitContent; sourceTree = "<group>"; };
 		5E9880192DE7962700B5FE8A /* VisionOStoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VisionOStoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5EA6E3012DEF8CEC00520B86 /* Docs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Docs.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -108,7 +107,6 @@
 		5E9880042DE7962500B5FE8A /* Packages */ = {
 			isa = PBXGroup;
 			children = (
-				5EA6E3012DEF8CEC00520B86 /* Docs.md */,
 				5E9880052DE7962500B5FE8A /* RealityKitContent */,
 			);
 			path = Packages;

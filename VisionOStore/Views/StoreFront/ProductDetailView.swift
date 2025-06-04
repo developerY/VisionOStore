@@ -14,6 +14,10 @@ import RealityKitContent
 struct ProductDetailView: View {
     let selectedProduct: ProductSplit?
     @Environment(\.modelContext) private var modelContext
+    @Environment(AppModel.self) var appModel
+    @Environment(\.openImmersiveSpace) private var openImmersiveSpace
+
+
     
     private let logger = Logger(subsystem: "com.yourapp.VisionOStore", category: "DetailView")
 
@@ -22,34 +26,28 @@ struct ProductDetailView: View {
         Group {
             if let product = selectedProduct {
                 VStack(alignment: .center, spacing: 20) {
-                    SpinningProductModelView(modelName: product.modelName, scale: product.scale)
-                        .id(product.id)
+                    SpinningProductModelView(modelName: product.modelName, scale: product.scale).id(product.id)
 
-                    Text(product.name)
-                        .font(.largeTitle.weight(.bold))
-                    
-                    HStack {
-                        Text("Price:")
-                            .font(.title2)
-                        Spacer()
-                        Text(String(format: "$%.2f", product.price))
-                            .font(.title2.weight(.semibold))
-                    }
-                    .padding(.horizontal)
-
-                    Button {
-                        addToCart(product: product)
-                    } label: {
-                        Label("Add to Cart", systemImage: "cart.badge.plus")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .padding()
-
-                    Spacer()
-                }
-                .padding()
-                .navigationTitle(product.name)
-            } else {
+                    Text(product.name).font(.largeTitle.weight(.bold))
+                                        HStack { Text("Price:").font(.title2); Spacer(); Text(String(format: "$%.2f", product.price)).font(.title2.weight(.semibold)) }.padding(.horizontal)
+                                        
+                                        HStack(spacing: 15) {
+                                            Button { addToCart(product: product) } label: { Label("Add to Cart", systemImage: "cart.badge.plus") }
+                                            .buttonStyle(.borderedProminent)
+                                            
+                                            Button {
+                                                appModel.selectedProductForImmersiveView = product
+                                                Task {
+                                                    logger.info("Opening General Immersive Space for \(product.name)")
+                                                    await openImmersiveSpace(id: appModel.generalImmersiveSpaceID)
+                                                }
+                                            } label: { Label("View Product Immersively", systemImage: "rotate.3d") }
+                                            .buttonStyle(.bordered)
+                                        }
+                                        .padding()
+                                        Spacer()
+                                    }.padding().navigationTitle(product.name)
+                                } else {
                 Text("Select a shoe to view it in 3D").font(.title)
             }
         }
