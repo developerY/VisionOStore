@@ -49,5 +49,15 @@ def Xform "Root"
         float3 xformOp:translate = (-0.12512265, 0, 0.051290452)
         uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
     }
+
+    def "EndParticles" (
+        active = true
+        prepend references = @EndParticles.usda@
+    )
+    {
+        float3 xformOp:scale = (1, 1, 1)
+        float3 xformOp:translate = (-0.02135317, 0.2551673, -0.030900091)
+        uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:orient", "xformOp:scale"]
+    }
 }
 

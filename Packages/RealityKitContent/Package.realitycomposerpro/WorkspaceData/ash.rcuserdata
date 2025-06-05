@@ -2,12 +2,37 @@
   "advancedEditorSelectedIdentifier" : "ProjectBrowser",
   "openSceneRelativePaths" : [
     "Immersive.usda",
-    "CloudShoe.usda"
+    "CloudShoe.usda",
+    "EndParticles.usda"
   ],
   "recentIdentifiers" : {
 
   },
   "sceneCameraHistory" : {
+    "0C0E87EE-3EFD-4BF9-AE92-DE03AD30C97A" : [
+      {
+        "date" : 770787147.297447,
+        "title" : "Untitled",
+        "transform" : [
+          1,
+          0,
+          0,
+          0,
+          0,
+          0.7071069,
+          -0.70710677,
+          0,
+          0,
+          0.70710677,
+          0.7071069,
+          0,
+          -0.17854202,
+          1.7680529,
+          1.8895282,
+          1
+        ]
+      }
+    ],
     "0C2C7204-D335-4AC6-A999-46B9E0666149" : [
       {
         "date" : 770698369.155416,
@@ -258,5 +283,5 @@
   "sceneViewportBackgroundColors" : {
 
   },
-  "selectedSceneRelativePath" : "CloudShoe.usda"
+  "selectedSceneRelativePath" : "Immersive.usda"
 }

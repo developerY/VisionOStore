@@ -31,6 +31,13 @@ struct RideLinksView: View {
                         //SettingsView()
                         SwiftDataChartTestView()
                     }
+                    
+                    NavigationLink("HUD") {
+                        CyclingHudView()
+                    }
+                    
+                    
+                    //CyclingHudView
                 }
             }
             .listStyle(.insetGrouped)
